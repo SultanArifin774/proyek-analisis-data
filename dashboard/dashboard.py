@@ -26,15 +26,32 @@ def create_categroy(df):
     df_stationcategory = df.groupby(['station', 'PM2.5_category']).size().unstack(fill_value=0)
     return df_stationcategory
 
+#Load Data
 main_df = pd.read_csv("main_data.csv")
 main_df['date'] = pd.to_datetime(main_df[['year', 'month', 'day']])
 df_station_pm25, df_station_pm10 = create_station(main_df)
 df_day_pm25, df_day_pm10 = create_daily(main_df)
-df_time_pm25, df_time_pm10 = create_tren(main_df)
+df_timepm25, df_timepm10 = create_tren(main_df)
 df_stationcategory = create_categroy(main_df)
 
-st.title("Air Quality Dashboard")
-st.header("Visualisasi Kualitas Udara")
+#Main Layout Dashboard
+st.set_page_config(page_title="Air Quality Dashboard", layout="wide")
+st.title("Dashboard Analisis Kualitas Udara")
+st.sidebar.title("Filter Data")
+
+#Filter Tanggal
+min_date = main_df['date'].min()
+max_date = main_df['date'].max()
+start_date, end_date = st.sidebar.date_input(
+    label="📅 Pilih Rentang Waktu",
+    value=[min_date, max_date],
+    min_value=min_date,
+    max_value=max_date
+)
+
+#Apply date filter
+filtered_df = df_timepm25.loc[start_date:end_date].to_frame().join(df_timepm10.loc[start_date:end_date])
+
 st.subheader("Kualitas Udara per Stasiun")
 col1, col2 = st.columns(2)
 with col1:
@@ -115,20 +132,18 @@ st.subheader("Kualitas Udara Sepanjang Tahun")
 col1, col2 = st.columns(2)
 with col1:
     fig, ax = plt.subplots(figsize=(10, 6))
-    df_time_pm25.plot(kind='line', x=df_time_pm25.index, y='PM2.5', ax=ax, color='lightblue', legend=False)
-    ax.set_xlabel('Waktu')
+    filtered_df['PM2.5'].plot(kind='line', x=filtered_df.index, y='PM2.5', ax=ax, color='lightblue', legend=False)
     ax.set_ylabel('Rata-rata Kadar PM2.5')
-    ax.set_title('Rata-rata Kadar PM2.5 Sepanjang Tahun', fontsize=12)
+    ax.set_title(f'Rata-rata kadar PM2.5 Periode {start_date.strftime("%d-%m-%Y")} - {end_date.strftime("%d-%m-%Y")}',fontsize=12)
     ax.tick_params(axis='y', labelsize=10)
     ax.tick_params(axis='x', labelsize=10)
     st.pyplot(fig)
 
 with col2:
     fig, ax = plt.subplots(figsize=(10, 6))
-    df_time_pm10.plot(kind='line', x=df_time_pm10.index, y='PM10', ax=ax, color='lightblue', legend=False)
-    ax.set_xlabel('Waktu')
+    filtered_df['PM10'].plot(kind='line', x=filtered_df.index, y='PM10', ax=ax, color='lightblue', legend=False)
     ax.set_ylabel('Rata-rata Kadar PM10')
-    ax.set_title('Rata-rata Kadar PM10 Sepanjang Tahun', fontsize=12)
+    ax.set_title(f'Rata-rata Kadar PM10 Tiap Periode {start_date.strftime("%d-%m-%Y")} - {end_date.strftime("%d-%m-%Y")}', fontsize=12)
     ax.tick_params(axis='y', labelsize=10)
     ax.tick_params(axis='x', labelsize=10)
     st.pyplot(fig)
