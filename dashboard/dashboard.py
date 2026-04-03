@@ -27,7 +27,7 @@ def create_categroy(df):
     return df_stationcategory
 
 #Load Data
-main_df = pd.read_csv("main_data.csv")
+main_df = pd.read_csv("dashboard/main_data.csv")
 main_df['date'] = pd.to_datetime(main_df[['year', 'month', 'day']])
 df_station_pm25, df_station_pm10 = create_station(main_df)
 df_day_pm25, df_day_pm10 = create_daily(main_df)
